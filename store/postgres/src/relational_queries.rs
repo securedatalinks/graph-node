@@ -1965,7 +1965,15 @@ impl<'a> QueryFragment<Pg> for RevertClampQuery<'a> {
         //     set block_range = int4range(lower(block_range), null)
         //   where block_range @> $block
         //     and not block_range @> INTMAX
+        //     and lower(block_range) <= $block
+        //     and upper(block_range) > $block
+        //     and upper(block_range) < INTMAX
         //   returning id
+        //
+        // The query states the same thing twice, once in terms of ranges
+        // and once in terms of the range bounds. That makes it possible
+        // for Postgres to use either the exclusion index on the table
+        // or the BRIN index
         out.push_sql("update ");
         out.push_sql(self.table.qualified_name.as_str());
         out.push_sql("\n   set ");
@@ -1978,6 +1986,17 @@ impl<'a> QueryFragment<Pg> for RevertClampQuery<'a> {
         out.push_bind_param::<Integer, _>(&self.block)?;
         out.push_sql(" and not ");
         out.push_sql(BLOCK_RANGE_CURRENT);
+        out.push_sql(" and lower(");
+        out.push_sql(BLOCK_RANGE_COLUMN);
+        out.push_sql(") <= ");
+        out.push_bind_param::<Integer, _>(&self.block)?;
+        out.push_sql(" and upper(");
+        out.push_sql(BLOCK_RANGE_COLUMN);
+        out.push_sql(") > ");
+        out.push_bind_param::<Integer, _>(&self.block)?;
+        out.push_sql(" and upper(");
+        out.push_sql(BLOCK_RANGE_COLUMN);
+        out.push_sql(") < 2147483647");
         out.push_sql("\nreturning ");
         out.push_identifier(PRIMARY_KEY_COLUMN)
     }
