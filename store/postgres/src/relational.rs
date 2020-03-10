@@ -848,6 +848,15 @@ impl Table {
             block_range = BLOCK_RANGE_COLUMN
         )?;
 
+        // Add a BRIN index on the block_range bounds to exploit the fact
+        // that block ranges closely correlate with where in a table an
+        // entity appears physically
+        write!(out,"create index brin_{table_index}_{table_name}\n    \
+                    on {schema_name}.{table_name} using brin(lower(block_range), upper(block_range), vid);\n",
+            table_index = self.position,
+            table_name = self.name,
+            schema_name = layout.schema)?;
+
         // Create indexes. Skip columns whose type is an array of enum,
         // since there is no good way to index them with Postgres 9.6.
         // Once we move to Postgres 11, we can enable that
@@ -989,6 +998,8 @@ create table rel.\"thing\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_0_thing
+    on rel.thing using brin(lower(block_range), upper(block_range), vid);
 create index attr_0_0_thing_id
     on rel.\"thing\" using btree(\"id\");
 create index attr_0_1_thing_big_thing
@@ -1008,6 +1019,8 @@ create table rel.\"scalar\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_1_scalar
+    on rel.scalar using brin(lower(block_range), upper(block_range), vid);
 create index attr_1_0_scalar_id
     on rel.\"scalar\" using btree(\"id\");
 create index attr_1_1_scalar_bool
@@ -1064,6 +1077,8 @@ type SongStat @entity {
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_0_musician
+    on rel.musician using brin(lower(block_range), upper(block_range), vid);
 create index attr_0_0_musician_id
     on rel.\"musician\" using btree(\"id\");
 create index attr_0_1_musician_name
@@ -1082,6 +1097,8 @@ create table rel.\"band\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_1_band
+    on rel.band using brin(lower(block_range), upper(block_range), vid);
 create index attr_1_0_band_id
     on rel.\"band\" using btree(\"id\");
 create index attr_1_1_band_name
@@ -1098,6 +1115,8 @@ create table rel.\"song\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_2_song
+    on rel.song using brin(lower(block_range), upper(block_range), vid);
 create index attr_2_0_song_id
     on rel.\"song\" using btree(\"id\");
 create index attr_2_1_song_title
@@ -1113,6 +1132,8 @@ create table rel.\"song_stat\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_3_song_stat
+    on rel.song_stat using brin(lower(block_range), upper(block_range), vid);
 create index attr_3_0_song_stat_id
     on rel.\"song_stat\" using btree(\"id\");
 create index attr_3_1_song_stat_played
@@ -1149,6 +1170,8 @@ type Habitat @entity {
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_0_animal
+    on rel.animal using brin(lower(block_range), upper(block_range), vid);
 create index attr_0_0_animal_id
     on rel.\"animal\" using btree(\"id\");
 create index attr_0_1_animal_forest
@@ -1161,6 +1184,8 @@ create table rel.\"forest\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_1_forest
+    on rel.forest using brin(lower(block_range), upper(block_range), vid);
 create index attr_1_0_forest_id
     on rel.\"forest\" using btree(\"id\");
 
@@ -1173,6 +1198,8 @@ create table rel.\"habitat\" (
         block_range          int4range not null,
         exclude using gist   (id with =, block_range with &&)
 );
+create index brin_2_habitat
+    on rel.habitat using brin(lower(block_range), upper(block_range), vid);
 create index attr_2_0_habitat_id
     on rel.\"habitat\" using btree(\"id\");
 create index attr_2_1_habitat_most_common
