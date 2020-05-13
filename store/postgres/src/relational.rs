@@ -281,7 +281,7 @@ impl Layout {
         document: &s::Document,
     ) -> Result<Layout, StoreError> {
         let layout =
-            crate::relational::Layout::new(document, IdType::String, subgraph, schema_name, true)?;
+            crate::relational::Layout::new(document, IdType::String, subgraph, schema_name, false)?;
         let sql = layout
             .as_ddl()
             .map_err(|_| StoreError::Unknown(format_err!("failed to generate DDL for layout")))?;
